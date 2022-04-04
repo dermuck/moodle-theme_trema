@@ -221,6 +221,18 @@ class course_renderer extends \core_course_renderer {
 
         $content .= html_writer::start_tag('div', array('class' => 'card-block text-center'));
 
+        //BL4: Print number of mod_bigbluebuttonbn and mod_presence sessions in course
+        $modinfos = get_fast_modinfo($course->id);
+        $prescount = array_key_exists('presence', $modinfos->instances) ? count($modinfos->instances['presence']) : 0;
+        $webcount =  array_key_exists('bigbluebuttonbn', $modinfos->instances) ? count($modinfos->instances['bigbluebuttonbn']) : 0;
+        if ($prescount >= 1) {
+            $content .= html_writer::tag('div', 'Präsenztermine: '.$prescount, array('class' => 'card-block font-weight-light teachers pl-3'));
+        }
+        if ($webcount >= 1) {
+            $content .= html_writer::tag('div', 'Webinartermine: '.$webcount, array('class' => 'card-block font-weight-light teachers pl-3'));
+        }
+
+
         // Print enrolmenticons.
         if ($icons = enrol_get_course_info_icons($course)) {
             foreach ($icons as $pixicon) {
@@ -282,6 +294,28 @@ class course_renderer extends \core_course_renderer {
                     'classes' => "modal-$course->id",
                     'courselink' => new moodle_url("/course/view.php", ['id' => $course->id])
                 ];
+
+                //BL4: add list of all mod_bigbluebuttonbn and mod_presence-instances to modal course summary
+                if($prescount >=1 ){
+                    $modal['body'] .= '<hr>';
+                    $modal['body'] .= html_writer::tag('b', 'Präsenztermine:');
+                    $modal['body'] .= html_writer::start_tag('ul', array('class' => 'm-1 px-6'));
+                    foreach ($modinfos->get_instances_of('presence') as $modinfo) {
+                        $modal['body'] .= html_writer::tag('li', $modinfo->name);
+                    }
+                    $modal['body'] .= html_writer::end_tag('ul');
+                }
+                if($webcount >= 1) {
+                    $modal['body'] .= '<hr>';
+                    $modal['body'] .= html_writer::tag('b', 'Webinartermine:');
+                    $modal['body'] .= html_writer::start_tag('ul', array('class' => 'm-1 px-6'));
+                    foreach ($modinfos->instances['bigbluebuttonbn'] as $modinfo) {
+                        $modal['body'] .= html_writer::tag('li', $modinfo->name);
+                    }
+                    $modal['body'] .= html_writer::end_tag('ul');
+                }
+
+
                 $content .= $this->output->render_from_template('theme_trema/course_summary_modal', $modal);
             }
         }
